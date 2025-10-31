@@ -1,0 +1,8 @@
+name: ComplianceAgent
+description: Validate KYC/AML compliance before processing.
+inputs: [customer_id, jurisdiction]
+steps:
+  - action: verify_identity
+  - action: aml_screening
+outputs: [compliance_status]
+example_result: { compliance_status: "verified" }

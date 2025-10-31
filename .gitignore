@@ -1,0 +1,7 @@
+__pycache__/
+node_modules/
+*.pyc
+.env
+*.log
+*.DS_Store
+ledger.json

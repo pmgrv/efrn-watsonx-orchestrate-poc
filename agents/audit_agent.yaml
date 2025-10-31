@@ -1,0 +1,7 @@
+name: AuditAgent
+description: Record final transaction data into PLR ledger.
+inputs: [transaction_id, timestamp]
+steps:
+  - action: add_transaction_to_ledger
+outputs: [ledger_hash]
+example_result: { ledger_hash: "abc123..." }

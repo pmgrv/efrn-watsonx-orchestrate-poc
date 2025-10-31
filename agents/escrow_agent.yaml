@@ -1,0 +1,7 @@
+name: EscrowAgent
+description: Hold 2% of transaction amount until completion.
+inputs: [amount]
+steps:
+  - action: hold_amount
+outputs: [escrow_value]
+example_result: { escrow_value: 24.0 }
