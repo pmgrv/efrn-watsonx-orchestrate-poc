@@ -1,12 +1,9 @@
 import React from "react";
-import Dashboard from "./components/Dashboard";
+import Dashboard from "./components/Dashboard"; // ✅ corrected path
 
 function App() {
   return (
-    <div style={{ padding: "2rem", fontFamily: "Arial" }}>
-      <h1 style={{ textAlign: "center", color: "#0043ce" }}>
-        EFRN – AI Orchestrated Financial Trust Network
-      </h1>
+    <div>
       <Dashboard />
     </div>
   );
