@@ -25,10 +25,17 @@ designed to unify employee loans, payroll transactions, and global compliance.
 
 ---
 
+## Overview
+This POC demonstrates an orchestration pipeline with explainable agents (Compliance, Risk, Escrow, Settlement, Audit), a PLR ledger, and a human-in-loop override.
+
+
 ## ▶️ Run Locally
 
-### 1️⃣ Backend
-```bash
-cd backend
-pip install -r requirements.txt
-python app.py
+
+### Backend
+1. Open terminal, go to `backend/` folder.
+2. Create venv and install:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate    # or .\venv\Scripts\activate on Windows
+   pip install -r requirements.txt

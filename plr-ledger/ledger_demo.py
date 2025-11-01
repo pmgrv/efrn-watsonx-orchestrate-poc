@@ -6,11 +6,15 @@ from datetime import datetime
 LEDGER_FILE = os.path.join(os.path.dirname(__file__), "ledger.json")
 
 def load_ledger():
-    if not os.path.exists(LEDGER_FILE):
+    if not os.path.exists(LEDGER_FILE) or os.stat(LEDGER_FILE).st_size == 0:
         genesis_block = [{
             "index": 0,
             "timestamp": "2025-11-01 00:00:00",
-            "data": "Genesis Block",
+            "employee": "SYSTEM",
+            "amount": 0,
+            "currency": "N/A",
+            "status": "genesis",
+            "reason": "Genesis Block",
             "prev_hash": "0",
             "hash": "GENESIS_HASH"
         }]
@@ -24,13 +28,12 @@ def save_ledger(ledger):
         json.dump(ledger, f, indent=2)
 
 def calculate_hash(block):
-    block_string = f"{block['index']}{block['timestamp']}{block.get('employee','')}{block.get('amount','')}{block.get('status','')}{block.get('reason','')}{block['prev_hash']}"
+    block_string = f"{block['index']}{block['timestamp']}{block.get('employee','')}{block.get('amount','')}{block.get('currency','')}{block.get('status','')}{block.get('reason','')}{block['prev_hash']}"
     return hashlib.sha256(block_string.encode()).hexdigest()
 
 def add_transaction_to_ledger(transaction):
     ledger = load_ledger()
     last_block = ledger[-1]
-
     new_block = {
         "index": len(ledger),
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -38,18 +41,16 @@ def add_transaction_to_ledger(transaction):
         "amount": transaction.get("amount", 0),
         "currency": transaction.get("currency", ""),
         "status": transaction.get("status", "pending"),
-        "reason": transaction.get("reason", ""),  # ✅ NEW FIELD
+        "reason": transaction.get("reason", ""),
+        "agent_feedback": transaction.get("agent_feedback", {}),
         "prev_hash": last_block["hash"]
     }
-
     new_block["hash"] = calculate_hash(new_block)
     ledger.append(new_block)
     save_ledger(ledger)
+    return new_block
 
 def get_recent_transactions(limit=10):
     ledger = load_ledger()
-    valid = [
-        tx for tx in ledger
-        if tx.get("employee") and tx.get("employee") not in ("SYSTEM", "")
-    ]
+    valid = [tx for tx in ledger if tx.get("employee") and tx.get("employee") != "SYSTEM"]
     return valid[-limit:]
