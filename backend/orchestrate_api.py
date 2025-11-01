@@ -5,16 +5,24 @@ Explainable orchestration engine (v2)
 """
 
 import time
+import sys
 from random import randint
 from pathlib import Path
-import sys
 
-# include ledger
-sys.path.append(str(Path(__file__).resolve().parents[1] / "plr-ledger"))
-from ledger_demo import add_transaction_to_ledger, get_recent_transactions
+# --- Ensure plr-ledger is accessible ---
+ledger_path = Path(__file__).resolve().parents[1] / "plr-ledger"
+sys.path.append(str(ledger_path))
+
+from ledger_demo import (
+    get_profile_by_employee,
+    update_trust_score,
+    add_transaction_to_ledger,
+    get_recent_transactions
+)
 
 from ftm_integration import post_transaction
 from escrow_module import hold_amount
+
 
 def get_last_rejected_amount(employee):
     try:
@@ -26,8 +34,13 @@ def get_last_rejected_amount(employee):
     except Exception:
         return 0
 
+
 def orchestrate_transaction(payload):
     employee = payload.get("employee", "EMP001")
+    profile = get_profile_by_employee(employee)
+    if not profile:
+        profile = {"efrn_id": f"EFRN-{employee[-3:]}", "trust_score": 50}
+
     amount = payload.get("amount", 1200)
     currency = payload.get("currency", "USD")
     scenario = payload.get("scenario", "positive")
@@ -40,7 +53,9 @@ def orchestrate_transaction(payload):
         "currency": currency,
         "steps": [],
         "finalStatus": "PENDING",
-        "reason": None
+        "reason": None,
+        "efrn_id": profile.get("efrn_id"),
+        "trust_score_before": profile.get("trust_score")
     }
 
     # Compliance
@@ -82,6 +97,7 @@ def orchestrate_transaction(payload):
             "reason": result["reason"],
             "agent_feedback": {"Compliance": comp["meta"], "Risk": risk_meta}
         })
+        update_trust_score(employee, -3)
         return result
 
     # Escrow
@@ -90,23 +106,17 @@ def orchestrate_transaction(payload):
     result["steps"].append(escrow)
     time.sleep(0.02)
 
-    # Settlement (mock external)
+    # Settlement
     settlement_tx = post_transaction({"employee": employee, "amount": amount, "currency": currency})
-    # Wait until settlement completes (avoid 'pending')
     max_retries = 5
     while settlement_tx.get("status", "").lower() == "pending" and max_retries > 0:
-        time.sleep(0.3)  # wait a bit before retry
-        settlement_tx = post_transaction({
-            "employee": employee,
-            "amount": amount,
-            "currency": currency
-        })
+        time.sleep(0.3)
+        settlement_tx = post_transaction({"employee": employee, "amount": amount, "currency": currency})
         max_retries -= 1
 
-    # After waiting, normalize final state
     settle_status = settlement_tx.get("status", "Cleared")
     if settle_status.lower() == "pending":
-        settle_status = "Cleared"  # fallback safeguard
+        settle_status = "Cleared"
 
     settlement = {
         "agent": "Settlement",
@@ -137,7 +147,10 @@ def orchestrate_transaction(payload):
     })
 
     audit["meta"]["ledger_index_preview"] = len(get_recent_transactions())
+
     result["finalStatus"] = "CLEARED"
+    update_trust_score(employee, +2)
+
     return result
 
 
@@ -172,16 +185,25 @@ def manual_override(payload):
             "meta": {"justification": justification}
         })
 
-        # Escrow (override)
+        # Escrow
         escrow_amt = hold_amount(amount or 1000)
         steps.append({"agent": "Escrow", "status": f"Held {escrow_amt} (override)", "timestamp": timestamp})
 
         # Settlement (override)
         settlement_tx = post_transaction({"employee": employee, "amount": amount, "currency": currency})
-        steps.append({"agent": "Settlement", "status": "Cleared (override)", "timestamp": timestamp, "meta": settlement_tx.get("meta", {})})
+        steps.append({
+            "agent": "Settlement",
+            "status": "Cleared (override)",
+            "timestamp": timestamp,
+            "meta": settlement_tx.get("meta", {})
+        })
 
         # Audit
-        steps.append({"agent": "Audit", "status": "Cleared and Recorded in PLR (override path)", "timestamp": timestamp})
+        steps.append({
+            "agent": "Audit",
+            "status": "Cleared and Recorded in PLR (override path)",
+            "timestamp": timestamp
+        })
 
         # Write override to ledger
         add_transaction_to_ledger({
@@ -199,11 +221,23 @@ def manual_override(payload):
             }
         })
 
+        # Fetch EFRN ID and trust update for UI display
+        profile = get_profile_by_employee(employee)
+        if not profile:
+            profile = {"efrn_id": f"EFRN-{employee[-3:]}", "trust_score": 50}
+        current_trust = profile.get("trust_score", 50)
+        updated_trust = current_trust + 1
+        update_trust_score(employee, +1)
+
         return {
             "employee": employee,
+            "efrn_id": profile.get("efrn_id"),
+            "trust_score_before": current_trust,
+            "trust_score_after": updated_trust,
             "finalStatus": "CLEARED_BY_OVERRIDE",
             "reason": f"Override applied by {approver}",
             "steps": steps
         }
+
     except Exception as e:
         return {"status": "failed", "error": str(e)}

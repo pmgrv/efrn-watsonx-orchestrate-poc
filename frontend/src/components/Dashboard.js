@@ -113,8 +113,14 @@ const Dashboard = () => {
 
   return (
     <div style={{ textAlign: "center", padding: "24px", fontFamily: "Arial, sans-serif" }}>
+	{workflow && (
+	  <div style={{ marginTop: 10, color: "#333" }}>
+		<strong>EFRN ID:</strong> {workflow.efrn_id || "-"} |
+		<strong> Trust Score:</strong> {workflow.trust_score_before || "-"}
+	  </div>
+	)}
       <h1 style={{ color: "#0043ce" }}>EFRN – AI Orchestrated Financial Trust Network</h1>
-
+	
       {/* Run Scenarios */}
       <div style={{ margin: "16px" }}>
         <button

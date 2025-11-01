@@ -54,3 +54,31 @@ def get_recent_transactions(limit=10):
     ledger = load_ledger()
     valid = [tx for tx in ledger if tx.get("employee") and tx.get("employee") != "SYSTEM"]
     return valid[-limit:]
+    
+# ================================
+# EFRN Digital ID Enhancements
+# ================================
+
+EFRN_PROFILE_FILE = os.path.join(os.path.dirname(__file__), "efrn_profiles.json")
+
+def load_profiles():
+    if not os.path.exists(EFRN_PROFILE_FILE):
+        return []
+    with open(EFRN_PROFILE_FILE, "r") as f:
+        return json.load(f)
+
+def get_profile_by_employee(employee):
+    profiles = load_profiles()
+    for p in profiles:
+        if p.get("employee") == employee:
+            return p
+    return None
+
+def update_trust_score(employee, delta):
+    profiles = load_profiles()
+    for p in profiles:
+        if p["employee"] == employee:
+            p["trust_score"] = max(0, min(100, p["trust_score"] + delta))
+            p["last_active"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    with open(EFRN_PROFILE_FILE, "w") as f:
+        json.dump(profiles, f, indent=2)
