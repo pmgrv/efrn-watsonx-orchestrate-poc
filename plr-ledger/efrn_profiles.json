@@ -1,0 +1,20 @@
+[
+  {
+    "efrn_id": "EFRN-001",
+    "employee": "EMP001",
+    "name": "Alice Smith",
+    "kyc_level": "Verified",
+    "trust_score": 100,
+    "wallet_balance": 5400.75,
+    "last_active": "2025-11-01 16:20:45"
+  },
+  {
+    "efrn_id": "EFRN-002",
+    "employee": "EMP999",
+    "name": "Bob Jones",
+    "kyc_level": "Pending Verification",
+    "trust_score": 57,
+    "wallet_balance": 220.1,
+    "last_active": "2025-11-01 16:21:01"
+  }
+]

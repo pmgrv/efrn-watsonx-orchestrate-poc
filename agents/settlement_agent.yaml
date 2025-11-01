@@ -1,0 +1,7 @@
+name: SettlementAgent
+description: Process fund transfer using IBM FTM rails.
+inputs: [amount, currency]
+steps:
+  - action: post_transaction
+outputs: [status]
+example_result: { status: "cleared" }

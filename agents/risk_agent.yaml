@@ -1,0 +1,7 @@
+name: RiskAgent
+description: Score borrower reliability using financial history.
+inputs: [salary, loan_amount]
+steps:
+  - action: calculate_risk_score
+outputs: [risk_score]
+example_result: { risk_score: 82 }
